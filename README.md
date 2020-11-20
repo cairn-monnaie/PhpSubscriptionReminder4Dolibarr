@@ -4,7 +4,7 @@ A small php single script app to send subscription reminder to dolibarr user
 
 ## Install
 ```bash
-git checkout ...
+git clone git@github.com:cairn-monnaie/PhpSubscriptionReminder4Dolibarr.git
 composer install
 ```
 
