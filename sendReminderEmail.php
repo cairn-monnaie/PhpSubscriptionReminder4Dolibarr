@@ -24,7 +24,7 @@ $dotenv->load(__DIR__.'/.env');
 
 
 foreach (array('DOLIBARR_DB_HOST','DOLIBARR_DB_PORT','DOLIBARR_DB_NAME','DOLIBARR_DB_PREFIX','DOLIBARR_DB_USER',
-             'DOLIBARR_DB_PASSWORD','SMTP_HOST','SMTP_USERNAME','SMTP_PASSWORD','SMTP_PORT','SUBJECT','FROM_EMAIL') as $ENV_VAR){
+             'DOLIBARR_DB_PASSWORD','SMTP_HOST','SMTP_USERNAME','SMTP_AUTH','SMTP_PASSWORD','SMTP_PORT','SUBJECT','FROM_EMAIL') as $ENV_VAR){
     if (!isset($_SERVER[$ENV_VAR])){
         echo "🤯 ".$ENV_VAR.' should be defined in your .env file'."\n";
         die('');
@@ -67,7 +67,7 @@ FROM %sadherent WHERE datefin = '%s';",$_SERVER['DOLIBARR_DB_PREFIX'],$date);
 $result = $mysqli->query($query);
 
 $headers = array ('From' => $_SERVER['FROM_EMAIL'], 'Subject' => $_SERVER['SUBJECT']);
-$smtp = Mail::factory('smtp', array ('host' => $_SERVER['SMTP_HOST'], 'port' => $_SERVER['SMTP_PORT'], 'auth' => true,
+$smtp = Mail::factory('smtp', array ('host' => $_SERVER['SMTP_HOST'], 'port' => $_SERVER['SMTP_PORT'], 'auth' => $_SERVER['SMTP_AUTH'],
     'username' => $_SERVER['SMTP_USERNAME'], 'password' => $_SERVER['SMTP_PASSWORD']));
 
 $counter = 0;
