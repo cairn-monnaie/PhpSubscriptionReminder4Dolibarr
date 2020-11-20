@@ -71,24 +71,28 @@ $smtp = Mail::factory('smtp', array ('host' => $_SERVER['SMTP_HOST'], 'port' => 
     'username' => $_SERVER['SMTP_USERNAME'], 'password' => $_SERVER['SMTP_PASSWORD']));
 
 $counter = 0;
+$fail = 0;
 
 while ($row = $result->fetch_row()) {
     if (isset($_SERVER['DEBUG_EMAIL']))
         $row[2] = $_SERVER['DEBUG_EMAIL'];
     $to = $row[1].' '.$row[0].' <'. $row[2] . '>';
     $headers['To'] = $to;
-    $mail = $smtp->send($to, $headers, $content);
+    $mail = $smtp->send($row[2], $headers, $content);
     if (PEAR::isError($mail)) {
         echo( $mail->getMessage());
+        echo "\n";
+        $fail++;
     } else {
         echo("Message successfully sent to ".$to."!\n");
+        $counter++;
     }
-    $counter++;
 }
-if ($counter == 0){
+if (($counter+$fail) == 0){
     echo "No mail to send for ".$date."\n";
 }else{
-    echo $counter.' mails where send'."\n";
+    echo $counter.' mail(s) where send'."\n";
+    echo $fail.' mail(s) failed'."\n";
 }
 
 $mysqli->close();
