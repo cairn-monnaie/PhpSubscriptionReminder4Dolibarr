@@ -1,9 +1,41 @@
 <?php
+/**
+ * @author gaetan janssens <gaetan@plopcom.fr>
+ */
 
-require_once "Mail.php";
+include_once "vendor/autoload.php";
+use Symfony\Component\Dotenv\Dotenv;
+
+echo "==================="."\n";
+echo date('Y-m-d H:i:s')."\n";
+echo "==================="."\n";
+
+if (!file_exists(__DIR__.'/.env')){
+    echo "please create .env file\n";
+    die('');
+}
+$dotenv = new Dotenv();
+$dotenv->load(__DIR__.'/.env');
+
+
+foreach (array('DOLIBARR_DB_HOST','DOLIBARR_DB_PORT','DOLIBARR_DB_NAME','DOLIBARR_DB_PREFIX','DOLIBARR_DB_USER',
+             'DOLIBARR_DB_PASSWORD','SMTP_HOST','SMTP_USERNAME','SMTP_PASSWORD','SMTP_PORT','SUBJECT','FROM_EMAIL') as $ENV_VAR){
+    if (!isset($_SERVER[$ENV_VAR])){
+        echo "🤯 ".$ENV_VAR.' should be defined in your .env file'."\n";
+        die('');
+    }
+}
+if (count($argv) > 1){
+    if ($argv[1]=='--help' || $argv[1] == '-h'){
+        echo "ℹ usage : \n";
+        echo "php ".__FILE__." YYYY-mm-dd /absolute/path/to/mail/content.txt";
+        echo "\n";
+        die('');
+    }
+}
 
 if (count($argv) <= 2){
-    echo "need a date and a text file\n";
+    echo "⚠ Oups, You need to pass a date and a content text file\n";
     die('');
 }
 
@@ -11,49 +43,47 @@ $date = $argv[1];
 $file = $argv[2];
 
 if (!file_exists($file)) {
-    die('file not found');
+    die('file '.$file.' not found');
 }
 
 $content =  file_get_contents($file);
 
-$mysqli = new mysqli($db_host,$db_user,$db_pass,$db_name);
+$mysqli = new mysqli($_SERVER['DOLIBARR_DB_HOST'],$_SERVER['DOLIBARR_DB_USER'],$_SERVER['DOLIBARR_DB_PASSWORD'],$_SERVER['DOLIBARR_DB_NAME']);
 
 if ($mysqli->connect_error) {
-    die('Erreur de connexion (' . $mysqli->connect_errno . ') '
-            . $mysqli->connect_error);
+    echo 'Erreur de connexion (' . $mysqli->connect_errno . ') '
+            . $mysqli->connect_error;
+    echo "\n"; die();
 }
 
 $query = sprintf("SELECT lastname,firstname,email,datefin,datec
-FROM %sadherent WHERE datefin = '%s';",$db_prefix,$date);
-
-//echo $query;
+FROM %sadherent WHERE datefin = '%s';",$_SERVER['DOLIBARR_DB_PREFIX'],$date);
 
 $result = $mysqli->query($query);
-//var_dump($result);
 
+$headers = array ('From' => $_SERVER['FROM_EMAIL'], 'Subject' => $_SERVER['SUBJECT']);
+$smtp = Mail::factory('smtp', array ('host' => $_SERVER['SMTP_HOST'], 'port' => $_SERVER['SMTP_PORT'], 'auth' => true,
+    'username' => $_SERVER['SMTP_USERNAME'], 'password' => $_SERVER['SMTP_PASSWORD']));
 
-$headers = array ('From' => $email_from, 'To' => $to, 'Subject' => $email_subject, 'Reply-To' => $email_address);
-$smtp = Mail::factory('smtp', array ('host' => $host, 'port' => $port, 'auth' => true, 'username' => $username, 'password' => $password));
-$mail = $smtp->send($to, $headers, $email_body);
-
-
-if (PEAR::isError($mail)) {
-echo("<p>" . $mail->getMessage() . "</p>");
-} else {
-echo("<p>Message successfully sent!</p>");
-}
-?>
-
-$subject = 'Votre adhésion au Cairn';
-$headers = 'From: Le Cairn <contact@cairn-monnaie.com>' . "\r\n";
-$headers .= 'X-Mailer: PHP/' . phpversion() . "\r\n";
-//$headers .= 'Bcc: janssensgaetan@gmail.com' . "\r\n";
-//<nicolas.faus@cairn-monnaie.com>
+$counter = 0;
 
 while ($row = $result->fetch_row()) {
-     $row = array('janssens','gaëtan','gaetan.janssens@ntymail.com','','');
-     $to = $row[2];
-     mail($row[1].' '.$row[0].' <'. $to . '>', $subject, $content, $headers);
+    if (isset($_SERVER['DEBUG_EMAIL']))
+        $row[2] = $_SERVER['DEBUG_EMAIL'];
+    $to = $row[1].' '.$row[0].' <'. $row[2] . '>';
+    $headers['To'] = $to;
+    $mail = $smtp->send($to, $headers, $content);
+    if (PEAR::isError($mail)) {
+        echo( $mail->getMessage());
+    } else {
+        echo("Message successfully sent to ".$to."!\n");
+    }
+    $counter++;
+}
+if ($counter == 0){
+    echo "No mail to send for ".$date."\n";
+}else{
+    echo $counter.' mails where send'."\n";
 }
 
 $mysqli->close();

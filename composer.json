@@ -1,0 +1,16 @@
+{
+    "name": "cairn-monnaie/php-subscription-reminder-for-dolibarr",
+    "description": "a small php single script app to send subscription reminder to dolibarr user",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gaetan Janssens",
+            "email": "gaetan@plopcom.fr"
+        }
+    ],
+    "require": {
+        "symfony/dotenv": "^5.1",
+        "pear/mail": "^1.4"
+    }
+}
