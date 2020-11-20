@@ -50,6 +50,7 @@ $file = $argv[2];
 if (!file_exists($file)) {
     die('file '.$file.' not found');
 }
+echo "content of ".$file." will be sent\n";
 
 $content =  file_get_contents($file);
 
