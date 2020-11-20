@@ -3,6 +3,11 @@
  * @author gaetan janssens <gaetan@plopcom.fr>
  */
 
+if (!is_dir(__DIR__.'/vendor')){
+    echo "please run 'composer install' to start\n";
+    die('');
+}
+
 include_once "vendor/autoload.php";
 use Symfony\Component\Dotenv\Dotenv;
 
